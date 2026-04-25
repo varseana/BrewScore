@@ -1,0 +1,294 @@
+// ⁘[ BREWSCORE ~ PRISMA SCHEMA ]⁘
+// la base de datos completa ~ expandible para lo que venga
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ⁘[ ENUMS ]⁘
+
+enum UserRole {
+  EXPLORER
+  CONNOISSEUR
+  OWNER
+  ADMIN
+}
+
+enum EstablishmentStatus {
+  ACTIVE
+  FLAGGED
+  SUSPENDED
+  REMOVED
+}
+
+enum ReportReason {
+  MISLEADING_INFO
+  FALSE_PROCEDURES
+  FAKE_EQUIPMENT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ⁘[ USUARIOS ]⁘
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String?
+  googleId          String?   @unique
+  name              String
+  avatar            String?
+  bio               String?
+  tastePreferences  String[]
+  role              UserRole  @default(EXPLORER)
+  followerCount     Int       @default(0)
+  followingCount    Int       @default(0)
+  reviewCount       Int       @default(0)
+  banned            Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // relaciones
+  reviews           Review[]
+  establishments    Establishment[]  @relation("EstablishmentOwner")
+  favorites         Favorite[]
+  reports           Report[]         @relation("Reporter")
+  claimRequests     ClaimRequest[]
+  issuedStrikes     Strike[]         @relation("StrikeIssuer")
+  reviewedClaims    ClaimRequest[]   @relation("ClaimReviewer")
+
+  // follows ~ el usuario sigue a otros y otros lo siguen
+  following         Follow[]  @relation("Follower")
+  followers         Follow[]  @relation("Following")
+
+  // tokens de refresco
+  refreshTokens     RefreshToken[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ⁘[ FOLLOWS ]⁘
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ⁘[ ESTABLECIMIENTOS ]⁘
+
+model Establishment {
+  id                String              @id @default(cuid())
+  ownerId           String?
+  name              String
+  description       String?
+  address           String
+  city              String
+  country           String
+  lat               Float
+  lng               Float
+  phone             String?
+  website           String?
+  photos            String[]
+  hours             Json?
+  transparencyScore Float               @default(0)
+  avgRating         Float               @default(0)
+  reviewCount       Int                 @default(0)
+  verified          Boolean             @default(false)
+  status            EstablishmentStatus @default(ACTIVE)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  owner          User?          @relation("EstablishmentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  coffeeProgram  CoffeeProgram?
+  reviews        Review[]
+  favorites      Favorite[]
+  reports        Report[]
+  strikes        Strike[]
+  claimRequests  ClaimRequest[]
+
+  @@index([lat, lng])
+  @@index([status])
+  @@index([ownerId])
+  @@index([avgRating])
+}
+
+// ⁘[ PROGRAMA DE CAFE ]⁘
+// todo lo que el establecimiento quiera compartir sobre su cafe
+
+model CoffeeProgram {
+  id               String   @id @default(cuid())
+  establishmentId  String   @unique
+  beanOrigins      String[]
+  brewingMethods   String[]
+  equipment        Json[]
+  waterFiltration  String?
+  milkOptions      String[]
+  signatureDrinks  Json[]
+  roastPolicy      String?
+  roastsInHouse    Boolean  @default(false)
+  daysFromRoast    Int?
+  updatedAt        DateTime @updatedAt
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+}
+
+// ⁘[ REVIEWS ]⁘
+
+model Review {
+  id              String   @id @default(cuid())
+  userId          String
+  establishmentId String
+  ratingBean      Int
+  ratingPrep      Int
+  ratingEquipment Int
+  ratingConsist   Int
+  ratingOverall   Int
+  text            String?
+  photos          String[]
+  drinkOrdered    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // respuesta del owner
+  ownerReply      String?
+  ownerReplyAt    DateTime?
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([establishmentId])
+  @@index([createdAt])
+}
+
+// ⁘[ FAVORITOS ]⁘
+
+model Favorite {
+  id              String   @id @default(cuid())
+  userId          String
+  establishmentId String
+  createdAt       DateTime @default(now())
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, establishmentId])
+}
+
+// ⁘[ REPORTES Y STRIKES ]⁘
+// el sistema de confianza ~ 3 strikes y fuera
+
+model Report {
+  id              String       @id @default(cuid())
+  reporterId      String
+  establishmentId String
+  reason          ReportReason
+  description     String
+  evidence        String[]
+  status          ReportStatus @default(PENDING)
+  adminNotes      String?
+  resolvedAt      DateTime?
+  createdAt       DateTime     @default(now())
+
+  reporter      User          @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  strike        Strike?
+
+  @@index([establishmentId])
+  @@index([status])
+}
+
+model Strike {
+  id              String   @id @default(cuid())
+  establishmentId String
+  reportId        String?  @unique
+  reason          String
+  issuedAt        DateTime @default(now())
+  issuedById      String
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  report        Report?       @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  issuedBy      User          @relation("StrikeIssuer", fields: [issuedById], references: [id])
+
+  @@index([establishmentId])
+}
+
+// ⁘[ CLAIM REQUESTS ]⁘
+// para que el duenho reclame su establecimiento
+
+model ClaimRequest {
+  id              String      @id @default(cuid())
+  userId          String
+  establishmentId String
+  proofDocuments  String[]
+  message         String?
+  status          ClaimStatus @default(PENDING)
+  reviewedById    String?
+  reviewedAt      DateTime?
+  adminNotes      String?
+  createdAt       DateTime    @default(now())
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  reviewedBy    User?         @relation("ClaimReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status])
+  @@index([establishmentId])
+}
+
+// ⁘[ AUDIT LOG ]⁘
+// para que el admin no haga cosas raras sin que quede registro
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  target    String
+  targetId  String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([target, targetId])
+  @@index([createdAt])
+}

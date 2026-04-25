@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&display=swap");
+
+@layer base {
+  body {
+    @apply bg-bg text-text-primary font-body antialiased;
+  }
+
+  /* scrollbar oscuro para que no desentone */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-alt rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-muted;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/[0.04] backdrop-blur-[12px] border border-border;
+  }
+
+  .glass-hover {
+    @apply hover:bg-white/[0.08] hover:shadow-glass-hover hover:-translate-y-[3px]
+           hover:border-brand-500 transition-all duration-[150ms] ease-smooth;
+  }
+
+  .btn-primary {
+    @apply bg-brand-500 text-bg font-semibold px-6 py-3 rounded-sm
+           hover:bg-brand-400 hover:-translate-y-[2px] hover:shadow-glass
+           active:translate-y-0 active:bg-brand-600
+           transition-all duration-[150ms] ease-smooth
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-alt text-text-primary font-medium px-6 py-3 rounded-sm border border-border
+           hover:bg-white/[0.08] hover:border-brand-700
+           active:bg-white/[0.04]
+           transition-all duration-[150ms] ease-smooth;
+  }
+
+  .btn-danger {
+    @apply bg-error/20 text-error font-medium px-6 py-3 rounded-sm border border-error/30
+           hover:bg-error/30 hover:border-error/50
+           transition-all duration-[150ms] ease-smooth;
+  }
+
+  .input {
+    @apply bg-surface border border-border rounded-sm px-4 py-3 text-text-primary
+           placeholder:text-text-muted
+           focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30
+           transition-all duration-[150ms] ease-smooth w-full;
+  }
+
+  .card {
+    @apply glass rounded-md p-6;
+  }
+
+  .card-interactive {
+    @apply card glass-hover cursor-pointer;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-brand {
+    @apply badge bg-brand-500/20 text-brand-300 border border-brand-500/30;
+  }
+
+  .badge-accent {
+    @apply badge bg-accent/20 text-[#c46b82] border border-accent/30;
+  }
+
+  .badge-success {
+    @apply badge bg-success/20 text-success border border-success/30;
+  }
+
+  .badge-error {
+    @apply badge bg-error/20 text-error border border-error/30;
+  }
+
+  .skeleton {
+    @apply bg-surface-alt rounded-sm animate-pulse;
+  }
+}
+
+/* leaflet overrides para dark theme */
+.leaflet-container {
+  background: #0d0d0d !important;
+}
+
+.leaflet-control-zoom a {
+  background: #1a1a1a !important;
+  color: #E8E0D8 !important;
+  border-color: #2E2A26 !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(26, 26, 26, 0.8) !important;
+  color: #8A8078 !important;
+}
+
+.leaflet-control-attribution a {
+  color: #C8A26B !important;
+}
+
+/* reducir animaciones si el usuario lo prefiere */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
