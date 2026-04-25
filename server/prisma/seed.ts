@@ -105,43 +105,13 @@ async function main() {
     }
   }
 
-  console.log("creando reviews...");
-  const reviewData = [
-    { userId: c1.id, estIdx: 0, bean: 5, prep: 5, equip: 5, consist: 5, overall: 5, text: "Cafeoteca is the best coffee experience in Costa Rica. The flight of origins is a must-try.", drink: "Flight of Origins" },
-    { userId: c2.id, estIdx: 0, bean: 5, prep: 5, equip: 4, consist: 5, overall: 5, text: "Incredible selection of Costa Rican regions. The siphon brew was flawless.", drink: "Siphon Tarrazu" },
-    { userId: c3.id, estIdx: 0, bean: 5, prep: 4, equip: 4, consist: 4, overall: 4, text: "Their cold brew is insane. Smooth, chocolatey, zero bitterness.", drink: "Cold brew" },
-    { userId: c1.id, estIdx: 4, bean: 5, prep: 4, equip: 4, consist: 4, overall: 5, text: "The Bribri cacao-coffee ceremony is unlike anything else. Cultural and delicious.", drink: "Cacao-Coffee Ceremony" },
-    { userId: c2.id, estIdx: 4, bean: 5, prep: 5, equip: 3, consist: 4, overall: 5, text: "Sikwa is doing something special. The Talamanca beans have a unique profile you won't find anywhere else.", drink: "Pour-over Bribri" },
-    { userId: c3.id, estIdx: 5, bean: 5, prep: 4, equip: 5, consist: 4, overall: 5, text: "Doka Estate is the real deal. Bean-to-cup in 24hrs. The vintage Probat roaster is beautiful.", drink: "Estate Reserve" },
-    { userId: e1.id, estIdx: 1, bean: 4, prep: 4, equip: 4, consist: 4, overall: 4, text: "Great brunch spot with solid coffee. Relaxed vibe in Escazu.", drink: "Latte" },
-    { userId: e2.id, estIdx: 3, bean: 4, prep: 3, equip: 3, consist: 4, overall: 4, text: "Beautiful setting inside the National Theatre. Coffee is good, not exceptional, but the experience is worth it.", drink: "Cappuccino" },
-    { userId: c1.id, estIdx: 9, bean: 5, prep: 5, equip: 4, consist: 5, overall: 5, text: "Coopedota is incredible. Carbon-neutral coffee that tastes amazing. The cooperative model is inspiring.", drink: "Pour-over Dota" },
-    { userId: c2.id, estIdx: 8, bean: 5, prep: 4, equip: 4, consist: 4, overall: 4, text: "Cloud Nine cold brew at 1400m altitude. The honey makes it special.", drink: "Cloud Nine" },
-    { userId: c1.id, estIdx: 6, bean: 4, prep: 3, equip: 4, consist: 4, overall: 4, text: "Britt is solid for what it is. Not artisan but consistent and educational. Great for first-timers.", drink: "Espresso Britt" },
-    { userId: e1.id, estIdx: 13, bean: 4, prep: 4, equip: 5, consist: 4, overall: 4, text: "Surreal experience drinking coffee at the farm where it was grown. The Alsacia Reserve is excellent.", drink: "Alsacia Reserve" },
-    { userId: c3.id, estIdx: 15, bean: 5, prep: 4, equip: 4, consist: 3, overall: 4, text: "The Gesha was mind-blowing but the espresso extraction was slightly off.", drink: "Lab Rat flight" },
-    { userId: c1.id, estIdx: 17, bean: 4, prep: 5, equip: 5, consist: 5, overall: 5, text: "Flawless ristretto. The Eagle One is dialed in perfectly.", drink: "Le Noir" },
-    { userId: e1.id, estIdx: 18, bean: 3, prep: 3, equip: 3, consist: 3, overall: 3, text: "Decent coffee for a quick grab. Nothing special but gets the job done.", drink: "Flat white" },
-  ];
-
-  for (const r of reviewData) {
-    const est = establishments[r.estIdx];
-    if (!est) continue;
-    await prisma.review.create({
-      data: {
-        userId: r.userId, establishmentId: est.id,
-        ratingBean: r.bean, ratingPrep: r.prep, ratingEquipment: r.equip,
-        ratingConsist: r.consist, ratingOverall: r.overall,
-        text: r.text, drinkOrdered: r.drink,
-      },
-    });
-  }
+  // no fake reviews ~ la plataforma empieza limpia, solo usuarios reales
 
   console.log("seed completado:");
   console.log(`  - 7 usuarios (1 admin, 1 owner, 3 connoisseurs, 2 explorers)`);
   console.log(`  - ${establishments.length} establecimientos (${CR_ESTABLISHMENTS.length} CR + ${INTL_ESTABLISHMENTS.length} international)`);
   console.log(`  - ${COFFEE_PROGRAMS.length} coffee programs`);
-  console.log(`  - ${reviewData.length} reviews`);
+  console.log(`  - 0 reviews (clean start — real users only)`);
   console.log(`  - 5 follows`);
   console.log("");
   console.log("credenciales (password: password123):");

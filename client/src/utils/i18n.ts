@@ -380,7 +380,7 @@ const dynamicTerms: Record<string, Record<string, string>> = {
 
     // establishment descriptions
     "Specialty coffee library in Barrio Escalante. Rotating single-origins from all Costa Rican regions. One of the best third-wave experiences in San Jose.": "Biblioteca de cafe de especialidad en Barrio Escalante. Origenes unicos rotativos de todas las regiones de Costa Rica. Una de las mejores experiencias de tercera ola en San Jose.",
-    "Specialty coffee and brunch in Escazu. Known for their single-origin Costa Rican beans and relaxed atmosphere.": "Cafe de especialidad y brunch en Escazu. Conocido por sus granos costarricenses de origen unico y ambiente relajado.",
+    "Specialty coffee and brunch in Barrio Escalante. Known for their single-origin Costa Rican beans and relaxed atmosphere.": "Cafe de especialidad y brunch en Barrio Escalante. Conocido por sus granos costarricenses de origen unico y ambiente relajado.",
     "Bohemian cafe in Barrio Otoya with artisan coffee, live music, and a colorful courtyard. A San Jose classic.": "Cafe bohemio en Barrio Otoya con cafe artesanal, musica en vivo y un patio colorido. Un clasico de San Jose.",
     "Inside the National Theatre of Costa Rica. Historic setting with premium local coffee. A must-visit for tourists.": "Dentro del Teatro Nacional de Costa Rica. Ambiente historico con cafe local premium. Visita obligada para turistas.",
     "Indigenous-inspired restaurant and coffee bar in Barrio Escalante. Beans sourced directly from Bribri and Cabecar communities in Talamanca.": "Restaurante y cafe de inspiracion indigena en Barrio Escalante. Granos directamente de comunidades Bribri y Cabecar en Talamanca.",
