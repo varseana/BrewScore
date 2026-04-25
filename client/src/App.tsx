@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LanguagePicker } from "@/components/ui/LanguagePicker";
 
 // lazy load pages
 const HomePage = lazy(() => import("@/pages/HomePage").then((m) => ({ default: m.HomePage })));
@@ -36,6 +37,7 @@ function PageLoader() {
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <LanguagePicker />
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>

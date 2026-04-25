@@ -10,6 +10,7 @@ import { CardSkeleton } from "@/components/ui/Skeleton";
 import { useEstablishments, useEstablishment } from "@/api/hooks";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import type { Establishment } from "@/types";
+import { useT } from "@/stores/lang";
 
 export function HomePage() {
   const { lat, lng } = useGeolocation();
@@ -34,6 +35,7 @@ export function HomePage() {
   }, []);
 
   const establishments = data?.items ?? [];
+  const t = useT();
 
   return (
     <div className="h-[calc(100vh-3.5rem)] relative flex flex-col lg:flex-row overflow-hidden">
@@ -42,7 +44,7 @@ export function HomePage() {
         <div className="p-4 border-b border-border">
           <input
             type="text"
-            placeholder="Search coffee shops..."
+            placeholder={t.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input text-sm"
@@ -50,7 +52,7 @@ export function HomePage() {
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <p className="text-text-muted text-xs">
-            {isLoading ? "Loading..." : `${establishments.length} spots found`}
+            {isLoading ? t.loading : t.spotsFound(establishments.length)}
           </p>
           {isLoading
             ? Array.from({ length: 4 }, (_, i) => <CardSkeleton key={i} />)
@@ -65,7 +67,7 @@ export function HomePage() {
               ))}
           {!isLoading && establishments.length === 0 && (
             <div className="text-center py-12 text-text-muted">
-              <p className="text-lg mb-2">No spots found</p>
+              <p className="text-lg mb-2">{t.noSpotsTitle}</p>
               <p className="text-sm">Try zooming out or changing your search</p>
             </div>
           )}
@@ -96,7 +98,7 @@ export function HomePage() {
         <div className="lg:hidden absolute top-3 left-3 right-3 z-[1000]">
           <input
             type="text"
-            placeholder="Search coffee shops..."
+            placeholder={t.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-surface/95 backdrop-blur-sm border border-border rounded-md px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-500 shadow-glass"
@@ -119,7 +121,7 @@ export function HomePage() {
           >
             <div className="w-10 h-1 bg-text-muted/30 rounded-full mb-2" />
             <p className="text-text-muted text-xs font-medium">
-              {isLoading ? "Loading..." : `${establishments.length} spots found`}
+              {isLoading ? t.loading : t.spotsFound(establishments.length)}
             </p>
           </button>
           <div className="overflow-y-auto px-4 pb-4 space-y-3" style={{ maxHeight: "calc(60vh - 3.5rem)" }}>

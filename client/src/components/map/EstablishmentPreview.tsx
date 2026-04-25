@@ -4,6 +4,7 @@
 import { Link } from "react-router-dom";
 import { Rating } from "@/components/ui/Rating";
 import { TransparencyBadge } from "@/components/ui/TransparencyBadge";
+import { useT } from "@/stores/lang";
 import type { Establishment } from "@/types";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function EstablishmentPreview({ establishment: est, onClose }: Props) {
+  const t = useT();
   const cp = est.coffeeProgram;
   const methods = cp?.brewingMethods ?? [];
   const origins = cp?.beanOrigins ?? [];
@@ -22,12 +24,12 @@ export function EstablishmentPreview({ establishment: est, onClose }: Props) {
     <>
       {/* ⁘[ MOBILE ~ top sheet ]⁘ */}
       <div className="lg:hidden absolute top-14 left-0 right-0 z-[1001] max-h-[55vh] overflow-y-auto bg-bg/95 backdrop-blur-sm border-b border-border animate-slide-up">
-        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} />
+        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} t={t} />
       </div>
 
       {/* ⁘[ DESKTOP ~ right panel ]⁘ */}
       <div className="hidden lg:block absolute top-0 right-0 bottom-0 w-96 z-[1001] overflow-y-auto bg-bg/95 backdrop-blur-sm border-l border-border animate-fade-in">
-        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} />
+        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} t={t} />
       </div>
     </>
   );
@@ -41,9 +43,10 @@ interface ContentProps {
   equipment: { name: string; type: string }[];
   drinks: { name: string; description: string }[];
   onClose: () => void;
+  t: ReturnType<typeof useT>;
 }
 
-function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose }: ContentProps) {
+function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose, t }: ContentProps) {
   return (
     <div className="p-5 space-y-4">
       {/* header + close */}
@@ -66,7 +69,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose 
         <Rating value={Math.round(est.avgRating)} size="sm" />
         <span className="text-text-muted text-sm">{est.avgRating.toFixed(1)} ({est.reviewCount})</span>
         <TransparencyBadge score={est.transparencyScore} size="sm" />
-        {est.verified && <span className="badge-success text-[10px]">Verified</span>}
+        {est.verified && <span className="badge-success text-[10px]">{t.verified}</span>}
       </div>
 
       {/* description */}
@@ -77,18 +80,18 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose 
       {/* status warning */}
       {est.status === "FLAGGED" && (
         <div className="bg-warning/10 border border-warning/20 rounded-sm px-3 py-2 text-xs text-warning">
-          Under review — some information may be inaccurate
+          {t.underReview}
         </div>
       )}
 
       {/* coffee program */}
       {cp && (
         <div className="space-y-3">
-          <h3 className="text-text-muted text-xs uppercase tracking-wider font-medium">Coffee Program</h3>
+          <h3 className="text-text-muted text-xs uppercase tracking-wider font-medium">{t.coffeeProgram}</h3>
 
           {methods.length > 0 && (
             <div>
-              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">Brewing Methods</p>
+              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">{t.brewingMethods}</p>
               <div className="flex flex-wrap gap-1.5">
                 {methods.map((m) => <span key={m} className="badge-brand text-[10px]">{m}</span>)}
               </div>
@@ -97,7 +100,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose 
 
           {origins.length > 0 && (
             <div>
-              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">Bean Origins</p>
+              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">{t.beanOrigins}</p>
               <div className="flex flex-wrap gap-1.5">
                 {origins.map((o) => <span key={o} className="badge-brand text-[10px]">{o}</span>)}
               </div>
@@ -106,7 +109,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose 
 
           {equipment.length > 0 && (
             <div>
-              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">Equipment</p>
+              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">{t.equipment}</p>
               {equipment.map((e) => (
                 <p key={e.name} className="text-sm">
                   <span className="text-text-primary">{e.name}</span>
@@ -118,7 +121,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose 
 
           {drinks.length > 0 && (
             <div>
-              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">Signature Drinks</p>
+              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">{t.signatureDrinks}</p>
               {drinks.map((d) => (
                 <div key={d.name} className="mb-1.5">
                   <span className="text-brand-300 text-sm font-medium">{d.name}</span>
@@ -130,14 +133,14 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose 
 
           {cp.roastPolicy && (
             <div>
-              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">Roast Policy</p>
+              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">{t.roastPolicy}</p>
               <p className="text-sm text-text-primary">{cp.roastPolicy}</p>
             </div>
           )}
 
           {cp.milkOptions && cp.milkOptions.length > 0 && (
             <div>
-              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">Milk Options</p>
+              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">{t.milkOptions}</p>
               <div className="flex flex-wrap gap-1.5">
                 {cp.milkOptions.map((m) => <span key={m} className="badge-brand text-[10px]">{m}</span>)}
               </div>
@@ -151,7 +154,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose 
         to={`/establishment/${est.id}`}
         className="btn-primary w-full text-center text-sm block"
       >
-        View Full Profile
+        {t.viewFullProfile}
       </Link>
     </div>
   );
