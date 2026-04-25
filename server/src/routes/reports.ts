@@ -1,11 +1,11 @@
 // ⁘[ REPORT ROUTES ~ SISTEMA DE CONFIANZA ]⁘
-// reportar establecimientos que mienten + strikes
 
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
+import { param, queryStr, queryNum } from "../utils/helpers.js";
 
 const router = Router();
 
@@ -23,19 +23,9 @@ router.post(
   authenticate,
   validate(createSchema),
   async (req: Request, res: Response): Promise<void> => {
-    const est = await prisma.establishment.findUnique({
-      where: { id: req.body.establishmentId },
-    });
-    if (!est || est.status === "REMOVED") {
-      res.status(404).json({ error: "establecimiento no encontrado" });
-      return;
-    }
-
-    // no puedes reportar tu propio establecimiento
-    if (est.ownerId === req.user!.userId) {
-      res.status(403).json({ error: "no puedes reportar tu propio establecimiento" });
-      return;
-    }
+    const est = await prisma.establishment.findUnique({ where: { id: req.body.establishmentId } });
+    if (!est || est.status === "REMOVED") { res.status(404).json({ error: "no encontrado" }); return; }
+    if (est.ownerId === req.user!.userId) { res.status(403).json({ error: "no puedes reportar tu propio establecimiento" }); return; }
 
     const report = await prisma.report.create({
       data: {
@@ -46,7 +36,6 @@ router.post(
         evidence: req.body.evidence || [],
       },
     });
-
     res.status(201).json(report);
   }
 );
@@ -55,12 +44,11 @@ router.post(
 
 router.get(
   "/",
-  authenticate,
-  requireRole("ADMIN"),
+  authenticate, requireRole("ADMIN"),
   async (req: Request, res: Response): Promise<void> => {
-    const status = req.query.status as string;
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-    const cursor = req.query.cursor as string | undefined;
+    const status = queryStr(req, "status");
+    const limit = Math.min(queryNum(req, "limit", 20), 50);
+    const cursor = queryStr(req, "cursor");
 
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
@@ -79,11 +67,7 @@ router.get(
 
     const hasMore = reports.length > limit;
     const items = hasMore ? reports.slice(0, limit) : reports;
-
-    res.json({
-      items,
-      nextCursor: hasMore ? items[items.length - 1].id : null,
-    });
+    res.json({ items, nextCursor: hasMore ? items[items.length - 1]!.id : null });
   }
 );
 
@@ -98,31 +82,24 @@ const resolveSchema = z.object({
 
 router.patch(
   "/:id/resolve",
-  authenticate,
-  requireRole("ADMIN"),
+  authenticate, requireRole("ADMIN"),
   validate(resolveSchema),
   async (req: Request, res: Response): Promise<void> => {
+    const id = param(req, "id");
     const report = await prisma.report.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: { establishment: true },
     });
     if (!report) { res.status(404).json({ error: "reporte no encontrado" }); return; }
     if (report.status !== "PENDING" && report.status !== "INVESTIGATING") {
-      res.status(400).json({ error: "este reporte ya fue resuelto" });
-      return;
+      res.status(400).json({ error: "este reporte ya fue resuelto" }); return;
     }
 
-    // actualizar reporte
     await prisma.report.update({
-      where: { id: req.params.id },
-      data: {
-        status: req.body.status,
-        adminNotes: req.body.adminNotes,
-        resolvedAt: new Date(),
-      },
+      where: { id },
+      data: { status: req.body.status, adminNotes: req.body.adminNotes, resolvedAt: new Date() },
     });
 
-    // si el admin decide dar strike
     if (req.body.issueStrike && req.body.status === "RESOLVED") {
       await prisma.strike.create({
         data: {
@@ -133,11 +110,7 @@ router.patch(
         },
       });
 
-      // contar strikes y actualizar status del establecimiento
-      const strikeCount = await prisma.strike.count({
-        where: { establishmentId: report.establishmentId },
-      });
-
+      const strikeCount = await prisma.strike.count({ where: { establishmentId: report.establishmentId } });
       let newStatus = report.establishment.status;
       if (strikeCount >= 3) newStatus = "SUSPENDED";
       else if (strikeCount >= 2) newStatus = "FLAGGED";
@@ -149,7 +122,6 @@ router.patch(
         });
       }
 
-      // audit log
       await prisma.auditLog.create({
         data: {
           userId: req.user!.userId,
@@ -171,23 +143,18 @@ router.get(
   "/strikes/:estId",
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
-    // owner puede ver sus propios strikes, admin puede ver todos
-    const est = await prisma.establishment.findUnique({ where: { id: req.params.estId } });
+    const estId = param(req, "estId");
+    const est = await prisma.establishment.findUnique({ where: { id: estId } });
     if (!est) { res.status(404).json({ error: "no encontrado" }); return; }
-
     if (req.user!.role !== "ADMIN" && est.ownerId !== req.user!.userId) {
-      res.status(403).json({ error: "no tienes permiso" });
-      return;
+      res.status(403).json({ error: "no tienes permiso" }); return;
     }
 
     const strikes = await prisma.strike.findMany({
-      where: { establishmentId: req.params.estId },
+      where: { establishmentId: estId },
       orderBy: { issuedAt: "desc" },
-      include: {
-        report: { select: { id: true, reason: true, description: true } },
-      },
+      include: { report: { select: { id: true, reason: true, description: true } } },
     });
-
     res.json(strikes);
   }
 );

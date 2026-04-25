@@ -1,11 +1,11 @@
 // ⁘[ ESTABLISHMENT ROUTES ]⁘
-// crud + busqueda por bounds para el mapa + filtros
 
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { authenticate, optionalAuth, requireRole } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
+import { param, queryStr, queryNum } from "../utils/helpers.js";
 
 const router = Router();
 
@@ -15,68 +15,59 @@ router.get(
   "/",
   optionalAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const {
-      bounds, q, methods, origins, equipment,
-      minRating, minScore, hasMethod, roastsInHouse,
-      limit: limitStr, cursor, sort,
-    } = req.query;
+    const bounds = queryStr(req, "bounds");
+    const q = queryStr(req, "q");
+    const methods = queryStr(req, "methods");
+    const hasMethod = queryStr(req, "hasMethod");
+    const origins = queryStr(req, "origins");
+    const minRating = queryStr(req, "minRating");
+    const minScore = queryStr(req, "minScore");
+    const roastsInHouse = queryStr(req, "roastsInHouse");
+    const sort = queryStr(req, "sort");
+    const cursor = queryStr(req, "cursor");
+    const limit = Math.min(queryNum(req, "limit", 50), 100);
 
-    const limit = Math.min(parseInt(limitStr as string) || 50, 100);
-
-    // construir where dinamico
     const where: Record<string, unknown> = { status: "ACTIVE" };
 
-    // bounds para el mapa ~ sw_lat,sw_lng,ne_lat,ne_lng
     if (bounds) {
-      const [swLat, swLng, neLat, neLng] = (bounds as string).split(",").map(Number);
-      if ([swLat, swLng, neLat, neLng].every((n) => !isNaN(n))) {
+      const [swLat, swLng, neLat, neLng] = bounds.split(",").map(Number);
+      if ([swLat, swLng, neLat, neLng].every((n) => !isNaN(n!))) {
         where.lat = { gte: swLat, lte: neLat };
         where.lng = { gte: swLng, lte: neLng };
       }
     }
 
-    // busqueda por texto
     if (q) {
       where.OR = [
-        { name: { contains: q as string, mode: "insensitive" } },
-        { city: { contains: q as string, mode: "insensitive" } },
-        { description: { contains: q as string, mode: "insensitive" } },
+        { name: { contains: q, mode: "insensitive" } },
+        { city: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
       ];
     }
 
-    // filtros de rating y score
-    if (minRating) where.avgRating = { gte: parseFloat(minRating as string) };
-    if (minScore) where.transparencyScore = { gte: parseFloat(minScore as string) };
+    if (minRating) where.avgRating = { gte: parseFloat(minRating) };
+    if (minScore) where.transparencyScore = { gte: parseFloat(minScore) };
 
-    // filtros de coffee program
-    if (methods || origins || equipment || hasMethod || roastsInHouse) {
+    if (methods || origins || hasMethod || roastsInHouse) {
       const cpWhere: Record<string, unknown> = {};
-      if (methods) cpWhere.brewingMethods = { hasSome: (methods as string).split(",") };
-      if (origins) cpWhere.beanOrigins = { hasSome: (origins as string).split(",") };
-      if (hasMethod) cpWhere.brewingMethods = { has: hasMethod as string };
+      if (methods) cpWhere.brewingMethods = { hasSome: methods.split(",") };
+      if (origins) cpWhere.beanOrigins = { hasSome: origins.split(",") };
+      if (hasMethod) cpWhere.brewingMethods = { has: hasMethod };
       if (roastsInHouse === "true") cpWhere.roastsInHouse = true;
       where.coffeeProgram = cpWhere;
     }
 
-    // ordenamiento
     let orderBy: Record<string, string> = { avgRating: "desc" };
     if (sort === "newest") orderBy = { createdAt: "desc" };
     if (sort === "score") orderBy = { transparencyScore: "desc" };
-    if (sort === "rating") orderBy = { avgRating: "desc" };
 
     const establishments = await prisma.establishment.findMany({
       where,
       take: limit + 1,
-      ...(cursor ? { cursor: { id: cursor as string }, skip: 1 } : {}),
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy,
       include: {
-        coffeeProgram: {
-          select: {
-            brewingMethods: true,
-            beanOrigins: true,
-            roastsInHouse: true,
-          },
-        },
+        coffeeProgram: { select: { brewingMethods: true, beanOrigins: true, roastsInHouse: true } },
       },
     });
 
@@ -85,7 +76,7 @@ router.get(
 
     res.json({
       items,
-      nextCursor: hasMore ? items[items.length - 1].id : null,
+      nextCursor: hasMore ? items[items.length - 1]!.id : null,
       total: await prisma.establishment.count({ where }),
     });
   }
@@ -97,38 +88,29 @@ router.get(
   "/:id",
   optionalAuth,
   async (req: Request, res: Response): Promise<void> => {
+    const id = param(req, "id");
     const est = await prisma.establishment.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
         coffeeProgram: true,
         owner: { select: { id: true, name: true, avatar: true } },
         _count: { select: { reviews: true, favorites: true, strikes: true } },
       },
     });
-    if (!est || est.status === "REMOVED") {
-      res.status(404).json({ error: "establecimiento no encontrado" });
-      return;
-    }
+    if (!est || est.status === "REMOVED") { res.status(404).json({ error: "no encontrado" }); return; }
 
-    // si esta logueado, decirle si lo tiene en favoritos
     let isFavorited = false;
     if (req.user) {
       const fav = await prisma.favorite.findUnique({
-        where: {
-          userId_establishmentId: {
-            userId: req.user.userId,
-            establishmentId: est.id,
-          },
-        },
+        where: { userId_establishmentId: { userId: req.user.userId, establishmentId: est.id } },
       });
       isFavorited = !!fav;
     }
-
     res.json({ ...est, isFavorited });
   }
 );
 
-// ⁘[ CREATE ~ ADMIN ONLY ]⁘
+// ⁘[ CREATE ]⁘
 
 const createSchema = z.object({
   name: z.string().min(1).max(200),
@@ -146,21 +128,17 @@ const createSchema = z.object({
 
 router.post(
   "/",
-  authenticate,
-  requireRole("ADMIN", "OWNER"),
+  authenticate, requireRole("ADMIN", "OWNER"),
   validate(createSchema),
   async (req: Request, res: Response): Promise<void> => {
     const est = await prisma.establishment.create({
-      data: {
-        ...req.body,
-        ownerId: req.user!.role === "OWNER" ? req.user!.userId : undefined,
-      },
+      data: { ...req.body, ownerId: req.user!.role === "OWNER" ? req.user!.userId : undefined },
     });
     res.status(201).json(est);
   }
 );
 
-// ⁘[ UPDATE ~ OWNER O ADMIN ]⁘
+// ⁘[ UPDATE ]⁘
 
 const updateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -181,19 +159,13 @@ router.patch(
   authenticate,
   validate(updateSchema),
   async (req: Request, res: Response): Promise<void> => {
-    const est = await prisma.establishment.findUnique({ where: { id: req.params.id } });
+    const id = param(req, "id");
+    const est = await prisma.establishment.findUnique({ where: { id } });
     if (!est) { res.status(404).json({ error: "no encontrado" }); return; }
-
-    // solo el owner o admin pueden editar
     if (req.user!.role !== "ADMIN" && est.ownerId !== req.user!.userId) {
-      res.status(403).json({ error: "no tienes permiso" });
-      return;
+      res.status(403).json({ error: "no tienes permiso" }); return;
     }
-
-    const updated = await prisma.establishment.update({
-      where: { id: req.params.id },
-      data: req.body,
-    });
+    const updated = await prisma.establishment.update({ where: { id }, data: req.body });
     res.json(updated);
   }
 );
@@ -217,22 +189,18 @@ router.put(
   authenticate,
   validate(coffeeProgramSchema),
   async (req: Request, res: Response): Promise<void> => {
-    const est = await prisma.establishment.findUnique({ where: { id: req.params.id } });
+    const id = param(req, "id");
+    const est = await prisma.establishment.findUnique({ where: { id } });
     if (!est) { res.status(404).json({ error: "no encontrado" }); return; }
     if (req.user!.role !== "ADMIN" && est.ownerId !== req.user!.userId) {
-      res.status(403).json({ error: "no tienes permiso" });
-      return;
+      res.status(403).json({ error: "no tienes permiso" }); return;
     }
-
     const program = await prisma.coffeeProgram.upsert({
-      where: { establishmentId: req.params.id },
+      where: { establishmentId: id },
       update: req.body,
-      create: { establishmentId: req.params.id, ...req.body },
+      create: { establishmentId: id, ...req.body },
     });
-
-    // recalcular transparency score
-    await recalcTransparencyScore(req.params.id);
-
+    await recalcTransparencyScore(id);
     res.json(program);
   }
 );
@@ -243,13 +211,11 @@ router.post(
   "/:id/favorite",
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
-    const estId = req.params.id;
+    const estId = param(req, "id");
     const userId = req.user!.userId;
-
     const existing = await prisma.favorite.findUnique({
       where: { userId_establishmentId: { userId, establishmentId: estId } },
     });
-
     if (existing) {
       await prisma.favorite.delete({ where: { id: existing.id } });
       res.json({ favorited: false });
@@ -262,32 +228,17 @@ router.post(
 
 // ⁘[ HELPERS ]⁘
 
-// calcula el score basado en cuantos campos del coffee program estan llenos
 async function recalcTransparencyScore(establishmentId: string) {
-  const cp = await prisma.coffeeProgram.findUnique({
-    where: { establishmentId },
-  });
+  const cp = await prisma.coffeeProgram.findUnique({ where: { establishmentId } });
   if (!cp) return;
-
   const fields = [
-    cp.beanOrigins.length > 0,
-    cp.brewingMethods.length > 0,
-    (cp.equipment as unknown[]).length > 0,
-    !!cp.waterFiltration,
-    cp.milkOptions.length > 0,
-    (cp.signatureDrinks as unknown[]).length > 0,
-    !!cp.roastPolicy,
-    cp.roastsInHouse !== null,
-    cp.daysFromRoast !== null,
+    cp.beanOrigins.length > 0, cp.brewingMethods.length > 0,
+    (cp.equipment as unknown[]).length > 0, !!cp.waterFiltration,
+    cp.milkOptions.length > 0, (cp.signatureDrinks as unknown[]).length > 0,
+    !!cp.roastPolicy, cp.roastsInHouse !== null, cp.daysFromRoast !== null,
   ];
-
-  const filled = fields.filter(Boolean).length;
-  const score = Math.round((filled / fields.length) * 100);
-
-  await prisma.establishment.update({
-    where: { id: establishmentId },
-    data: { transparencyScore: score },
-  });
+  const score = Math.round((fields.filter(Boolean).length / fields.length) * 100);
+  await prisma.establishment.update({ where: { id: establishmentId }, data: { transparencyScore: score } });
 }
 
 export default router;

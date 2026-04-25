@@ -8,7 +8,7 @@ import { Rating } from "@/components/ui/Rating";
 import { TransparencyBadge } from "@/components/ui/TransparencyBadge";
 import { ReviewCard } from "@/components/cards/ReviewCard";
 import { Modal } from "@/components/ui/Modal";
-import { ReviewSkeleton, ProfileSkeleton } from "@/components/ui/Skeleton";
+import { ProfileSkeleton } from "@/components/ui/Skeleton";
 
 export function EstablishmentPage() {
   const { id } = useParams<{ id: string }>();

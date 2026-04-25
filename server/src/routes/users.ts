@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { authenticate, optionalAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
+import { param, queryNum, queryStr } from "../utils/helpers.js";
 
 const router = Router();
 
@@ -14,40 +15,24 @@ router.get(
   "/:id",
   optionalAuth,
   async (req: Request, res: Response): Promise<void> => {
+    const id = param(req, "id");
     const user = await prisma.user.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       select: {
-        id: true,
-        name: true,
-        avatar: true,
-        bio: true,
-        tastePreferences: true,
-        role: true,
-        followerCount: true,
-        followingCount: true,
-        reviewCount: true,
-        createdAt: true,
+        id: true, name: true, avatar: true, bio: true,
+        tastePreferences: true, role: true, followerCount: true,
+        followingCount: true, reviewCount: true, createdAt: true,
       },
     });
-    if (!user) {
-      res.status(404).json({ error: "usuario no encontrado" });
-      return;
-    }
+    if (!user) { res.status(404).json({ error: "usuario no encontrado" }); return; }
 
-    // si el que pide esta logueado, decirle si ya sigue a este usuario
     let isFollowing = false;
     if (req.user) {
       const follow = await prisma.follow.findUnique({
-        where: {
-          followerId_followingId: {
-            followerId: req.user.userId,
-            followingId: user.id,
-          },
-        },
+        where: { followerId_followingId: { followerId: req.user.userId, followingId: user.id } },
       });
       isFollowing = !!follow;
     }
-
     res.json({ ...user, isFollowing });
   }
 );
@@ -70,16 +55,9 @@ router.patch(
       where: { id: req.user!.userId },
       data: req.body,
       select: {
-        id: true,
-        name: true,
-        avatar: true,
-        bio: true,
-        tastePreferences: true,
-        role: true,
-        followerCount: true,
-        followingCount: true,
-        reviewCount: true,
-        createdAt: true,
+        id: true, name: true, avatar: true, bio: true,
+        tastePreferences: true, role: true, followerCount: true,
+        followingCount: true, reviewCount: true, createdAt: true,
       },
     });
     res.json(user);
@@ -92,33 +70,24 @@ router.post(
   "/:id/follow",
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
-    const targetId = req.params.id;
+    const targetId = param(req, "id");
     const userId = req.user!.userId;
 
-    if (targetId === userId) {
-      res.status(400).json({ error: "no te puedes seguir a ti mismo" });
-      return;
-    }
+    if (targetId === userId) { res.status(400).json({ error: "no te puedes seguir a ti mismo" }); return; }
 
     const target = await prisma.user.findUnique({ where: { id: targetId } });
-    if (!target) {
-      res.status(404).json({ error: "usuario no encontrado" });
-      return;
-    }
+    if (!target) { res.status(404).json({ error: "usuario no encontrado" }); return; }
 
-    // verificar si ya lo sigue
     const existing = await prisma.follow.findUnique({
       where: { followerId_followingId: { followerId: userId, followingId: targetId } },
     });
 
     if (existing) {
-      // unfollow
       await prisma.follow.delete({ where: { id: existing.id } });
       await prisma.user.update({ where: { id: userId }, data: { followingCount: { decrement: 1 } } });
       await prisma.user.update({ where: { id: targetId }, data: { followerCount: { decrement: 1 } } });
       res.json({ following: false });
     } else {
-      // follow
       await prisma.follow.create({ data: { followerId: userId, followingId: targetId } });
       await prisma.user.update({ where: { id: userId }, data: { followingCount: { increment: 1 } } });
       await prisma.user.update({ where: { id: targetId }, data: { followerCount: { increment: 1 } } });
@@ -132,56 +101,42 @@ router.post(
 router.get(
   "/:id/followers",
   async (req: Request, res: Response): Promise<void> => {
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-    const cursor = req.query.cursor as string | undefined;
+    const id = param(req, "id");
+    const limit = Math.min(queryNum(req, "limit", 20), 50);
+    const cursor = queryStr(req, "cursor");
 
     const follows = await prisma.follow.findMany({
-      where: { followingId: req.params.id },
+      where: { followingId: id },
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy: { createdAt: "desc" },
-      include: {
-        follower: {
-          select: { id: true, name: true, avatar: true, role: true, reviewCount: true },
-        },
-      },
+      include: { follower: { select: { id: true, name: true, avatar: true, role: true, reviewCount: true } } },
     });
 
     const hasMore = follows.length > limit;
     const items = hasMore ? follows.slice(0, limit) : follows;
-
-    res.json({
-      items: items.map((f) => f.follower),
-      nextCursor: hasMore ? items[items.length - 1].id : null,
-    });
+    res.json({ items: items.map((f) => f.follower), nextCursor: hasMore ? items[items.length - 1]!.id : null });
   }
 );
 
 router.get(
   "/:id/following",
   async (req: Request, res: Response): Promise<void> => {
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-    const cursor = req.query.cursor as string | undefined;
+    const id = param(req, "id");
+    const limit = Math.min(queryNum(req, "limit", 20), 50);
+    const cursor = queryStr(req, "cursor");
 
     const follows = await prisma.follow.findMany({
-      where: { followerId: req.params.id },
+      where: { followerId: id },
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy: { createdAt: "desc" },
-      include: {
-        following: {
-          select: { id: true, name: true, avatar: true, role: true, reviewCount: true },
-        },
-      },
+      include: { following: { select: { id: true, name: true, avatar: true, role: true, reviewCount: true } } },
     });
 
     const hasMore = follows.length > limit;
     const items = hasMore ? follows.slice(0, limit) : follows;
-
-    res.json({
-      items: items.map((f) => f.following),
-      nextCursor: hasMore ? items[items.length - 1].id : null,
-    });
+    res.json({ items: items.map((f) => f.following), nextCursor: hasMore ? items[items.length - 1]!.id : null });
   }
 );
 

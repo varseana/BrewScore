@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { useUser, useToggleFollow, useUserReviews } from "@/api/hooks";
 import { useAuthStore } from "@/stores/auth";
 import { ReviewCard } from "@/components/cards/ReviewCard";
-import { ReviewSkeleton, ProfileSkeleton } from "@/components/ui/Skeleton";
+import { ProfileSkeleton } from "@/components/ui/Skeleton";
 
 export function ProfilePage() {
   const { id } = useParams<{ id: string }>();

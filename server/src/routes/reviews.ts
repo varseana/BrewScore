@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { authenticate, optionalAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
+import { param, queryStr, queryNum } from "../utils/helpers.js";
 
 const router = Router();
 
@@ -14,31 +15,26 @@ router.get(
   "/establishment/:estId",
   optionalAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-    const cursor = req.query.cursor as string | undefined;
-    const sort = req.query.sort as string;
+    const estId = param(req, "estId");
+    const limit = Math.min(queryNum(req, "limit", 20), 50);
+    const cursor = queryStr(req, "cursor");
+    const sort = queryStr(req, "sort");
 
     let orderBy: Record<string, string> = { createdAt: "desc" };
     if (sort === "rating-high") orderBy = { ratingOverall: "desc" };
     if (sort === "rating-low") orderBy = { ratingOverall: "asc" };
 
     const reviews = await prisma.review.findMany({
-      where: { establishmentId: req.params.estId },
+      where: { establishmentId: estId },
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy,
-      include: {
-        user: { select: { id: true, name: true, avatar: true, role: true } },
-      },
+      include: { user: { select: { id: true, name: true, avatar: true, role: true } } },
     });
 
     const hasMore = reviews.length > limit;
     const items = hasMore ? reviews.slice(0, limit) : reviews;
-
-    res.json({
-      items,
-      nextCursor: hasMore ? items[items.length - 1].id : null,
-    });
+    res.json({ items, nextCursor: hasMore ? items[items.length - 1]!.id : null });
   }
 );
 
@@ -64,111 +60,86 @@ router.post(
     const userId = req.user!.userId;
     const { establishmentId } = req.body;
 
-    // verificar que el establecimiento existe
     const est = await prisma.establishment.findUnique({ where: { id: establishmentId } });
-    if (!est || est.status !== "ACTIVE") {
-      res.status(404).json({ error: "establecimiento no encontrado o no activo" });
-      return;
-    }
-
-    // no puedes reviewear tu propio establecimiento
-    if (est.ownerId === userId) {
-      res.status(403).json({ error: "no puedes reviewear tu propio establecimiento" });
-      return;
-    }
+    if (!est || est.status !== "ACTIVE") { res.status(404).json({ error: "no encontrado o no activo" }); return; }
+    if (est.ownerId === userId) { res.status(403).json({ error: "no puedes reviewear tu propio establecimiento" }); return; }
 
     const review = await prisma.review.create({
       data: { ...req.body, userId },
-      include: {
-        user: { select: { id: true, name: true, avatar: true, role: true } },
-      },
+      include: { user: { select: { id: true, name: true, avatar: true, role: true } } },
     });
 
-    // actualizar contadores y promedio
     await updateEstablishmentStats(establishmentId);
     await updateUserReviewCount(userId);
-
     res.status(201).json(review);
   }
 );
 
 // ⁘[ OWNER REPLY ]⁘
 
-const replySchema = z.object({
-  ownerReply: z.string().min(1).max(1000),
-});
+const replySchema = z.object({ ownerReply: z.string().min(1).max(1000) });
 
 router.post(
   "/:id/reply",
   authenticate,
   validate(replySchema),
   async (req: Request, res: Response): Promise<void> => {
+    const id = param(req, "id");
     const review = await prisma.review.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: { establishment: { select: { ownerId: true } } },
     });
     if (!review) { res.status(404).json({ error: "review no encontrado" }); return; }
-
     if (req.user!.role !== "ADMIN" && review.establishment.ownerId !== req.user!.userId) {
-      res.status(403).json({ error: "solo el owner puede responder" });
-      return;
+      res.status(403).json({ error: "solo el owner puede responder" }); return;
     }
-
     const updated = await prisma.review.update({
-      where: { id: req.params.id },
+      where: { id },
       data: { ownerReply: req.body.ownerReply, ownerReplyAt: new Date() },
     });
     res.json(updated);
   }
 );
 
-// ⁘[ DELETE REVIEW ~ SOLO AUTOR O ADMIN ]⁘
+// ⁘[ DELETE REVIEW ]⁘
 
 router.delete(
   "/:id",
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
-    const review = await prisma.review.findUnique({ where: { id: req.params.id } });
+    const id = param(req, "id");
+    const review = await prisma.review.findUnique({ where: { id } });
     if (!review) { res.status(404).json({ error: "review no encontrado" }); return; }
-
     if (req.user!.role !== "ADMIN" && review.userId !== req.user!.userId) {
-      res.status(403).json({ error: "no tienes permiso" });
-      return;
+      res.status(403).json({ error: "no tienes permiso" }); return;
     }
-
-    await prisma.review.delete({ where: { id: req.params.id } });
+    await prisma.review.delete({ where: { id } });
     await updateEstablishmentStats(review.establishmentId);
     await updateUserReviewCount(review.userId);
-
     res.json({ message: "review eliminado" });
   }
 );
 
-// ⁘[ USER REVIEWS ~ FEED DE UN USUARIO ]⁘
+// ⁘[ USER REVIEWS ]⁘
 
 router.get(
   "/user/:userId",
   async (req: Request, res: Response): Promise<void> => {
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-    const cursor = req.query.cursor as string | undefined;
+    const userId = param(req, "userId");
+    const limit = Math.min(queryNum(req, "limit", 20), 50);
+    const cursor = queryStr(req, "cursor");
 
     const reviews = await prisma.review.findMany({
-      where: { userId: req.params.userId },
+      where: { userId },
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy: { createdAt: "desc" },
-      include: {
-        establishment: { select: { id: true, name: true, city: true, avgRating: true } },
-      },
+      include: { establishment: { select: { id: true, name: true, city: true, avgRating: true } } },
     });
 
     const hasMore = reviews.length > limit;
     const items = hasMore ? reviews.slice(0, limit) : reviews;
-
-    res.json({
-      items,
-      nextCursor: hasMore ? items[items.length - 1].id : null,
-    });
+    res.json({ items, nextCursor: hasMore ? items[items.length - 1]!.id : null });
   }
 );
 
@@ -182,23 +153,17 @@ async function updateEstablishmentStats(establishmentId: string) {
   });
   await prisma.establishment.update({
     where: { id: establishmentId },
-    data: {
-      avgRating: Math.round((agg._avg.ratingOverall || 0) * 10) / 10,
-      reviewCount: agg._count,
-    },
+    data: { avgRating: Math.round((agg._avg.ratingOverall || 0) * 10) / 10, reviewCount: agg._count },
   });
 }
 
 async function updateUserReviewCount(userId: string) {
   const count = await prisma.review.count({ where: { userId } });
   const data: { reviewCount: number; role?: "CONNOISSEUR" } = { reviewCount: count };
-
-  // auto-promote a connoisseur si llega a 10 reviews
   if (count >= 10) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user && user.role === "EXPLORER") data.role = "CONNOISSEUR";
   }
-
   await prisma.user.update({ where: { id: userId }, data });
 }
 

@@ -1,11 +1,10 @@
 // ⁘[ MAP VIEW ]⁘
 // mapa interactivo con leaflet ~ el corazon de la app
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.markercluster";
-import { HoverCard } from "./HoverCard";
 import type { Establishment } from "@/types";
 
 // ⁘[ CUSTOM MARKER ICON ]⁘
