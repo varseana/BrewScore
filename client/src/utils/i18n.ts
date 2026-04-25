@@ -24,6 +24,8 @@ const translations = {
     // preview
     viewFullProfile: "View Full Profile",
     getDirections: "How to get there",
+    photos: "photos",
+    showLess: "Show less",
     brewingMethods: "Brewing Methods",
     beanOrigins: "Bean Origins",
     equipment: "Equipment",
@@ -138,6 +140,8 @@ const translations = {
 
     viewFullProfile: "Ver Perfil Completo",
     getDirections: "Como llegar",
+    photos: "fotos",
+    showLess: "Ver menos",
     brewingMethods: "Metodos de Preparacion",
     beanOrigins: "Origen del Grano",
     equipment: "Equipo",

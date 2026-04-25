@@ -7,6 +7,29 @@ import { CR_ESTABLISHMENTS, INTL_ESTABLISHMENTS, COFFEE_PROGRAMS } from "./seed-
 
 const prisma = new PrismaClient();
 
+// fotos de unsplash ~ coffee shops reales, sin api key
+const PHOTOS: string[][] = [
+  ["https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800", "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800", "https://images.unsplash.com/photo-1559305616-3f99cd43e353?w=800", "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800"],
+  ["https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800", "https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=800", "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800"],
+  ["https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=800", "https://images.unsplash.com/photo-1498804103079-a6351b050096?w=800", "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800", "https://images.unsplash.com/photo-1514432324607-a09d9b4aefda?w=800", "https://images.unsplash.com/photo-1507133750040-4a8f57021571?w=800"],
+  ["https://images.unsplash.com/photo-1559496417-e7f25cb247f3?w=800", "https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=800", "https://images.unsplash.com/photo-1485182708500-e8f1f318ba72?w=800"],
+  ["https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=800", "https://images.unsplash.com/photo-1525610553efeab8e5f5e0085bcef3d?w=800", "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=800"],
+  ["https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=800", "https://images.unsplash.com/photo-1504630083234-14187a9df0f5?w=800", "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=800", "https://images.unsplash.com/photo-1510972527921-ce03766a1cf1?w=800"],
+  ["https://images.unsplash.com/photo-1559305616-3f99cd43e353?w=800", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800", "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800"],
+  ["https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800", "https://images.unsplash.com/photo-1504630083234-14187a9df0f5?w=800", "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800", "https://images.unsplash.com/photo-1514432324607-a09d9b4aefda?w=800", "https://images.unsplash.com/photo-1507133750040-4a8f57021571?w=800"],
+  ["https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800", "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800", "https://images.unsplash.com/photo-1485182708500-e8f1f318ba72?w=800"],
+  ["https://images.unsplash.com/photo-1498804103079-a6351b050096?w=800", "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800", "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=800", "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=800"],
+  ["https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=800", "https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=800"],
+  ["https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=800", "https://images.unsplash.com/photo-1510972527921-ce03766a1cf1?w=800", "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800", "https://images.unsplash.com/photo-1504630083234-14187a9df0f5?w=800"],
+  ["https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800", "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800", "https://images.unsplash.com/photo-1559305616-3f99cd43e353?w=800"],
+  ["https://images.unsplash.com/photo-1525610553efeab8e5f5e0085bcef3d?w=800", "https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=800"],
+  ["https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800", "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800", "https://images.unsplash.com/photo-1514432324607-a09d9b4aefda?w=800"],
+  ["https://images.unsplash.com/photo-1559496417-e7f25cb247f3?w=800", "https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=800", "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800"],
+  ["https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=800", "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=800", "https://images.unsplash.com/photo-1485182708500-e8f1f318ba72?w=800"],
+  ["https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800", "https://images.unsplash.com/photo-1498804103079-a6351b050096?w=800", "https://images.unsplash.com/photo-1507133750040-4a8f57021571?w=800", "https://images.unsplash.com/photo-1510972527921-ce03766a1cf1?w=800"],
+  ["https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800", "https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=800"],
+];
+
 async function main() {
   console.log("limpiando base de datos...");
   await prisma.auditLog.deleteMany();
@@ -66,7 +89,7 @@ async function main() {
         ownerId: i === 0 ? owner.id : undefined, // cafe origen owned by maria
         name: d.name, description: d.description, address: d.address,
         city: d.city, country: d.country, lat: d.lat, lng: d.lng,
-        photos: [], hours: { mon: "7:00-18:00", tue: "7:00-18:00", wed: "7:00-18:00", thu: "7:00-18:00", fri: "7:00-18:00", sat: "8:00-16:00", sun: "closed" },
+        photos: PHOTOS[i % PHOTOS.length]!, hours: { mon: "7:00-18:00", tue: "7:00-18:00", wed: "7:00-18:00", thu: "7:00-18:00", fri: "7:00-18:00", sat: "8:00-16:00", sun: "closed" },
         transparencyScore: d.transparencyScore, avgRating: d.avgRating,
         reviewCount: d.reviewCount, verified: d.verified ?? false, status: "ACTIVE",
       },

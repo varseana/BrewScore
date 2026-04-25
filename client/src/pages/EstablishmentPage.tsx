@@ -10,6 +10,7 @@ import { ReviewCard } from "@/components/cards/ReviewCard";
 import { Modal } from "@/components/ui/Modal";
 import { ProfileSkeleton } from "@/components/ui/Skeleton";
 import { NavigationButtons } from "@/components/ui/NavigationButtons";
+import { PhotoGallery } from "@/components/ui/PhotoGallery";
 import { useT } from "@/stores/lang";
 import { useLangStore } from "@/stores/lang";
 import { translateTerm } from "@/utils/i18n";
@@ -147,6 +148,14 @@ export function EstablishmentPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* photos */}
+      {est.photos.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="font-display text-xl">{t.photos}</h2>
+          <PhotoGallery photos={est.photos} maxPreview={6} />
         </div>
       )}
 

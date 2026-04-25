@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Rating } from "@/components/ui/Rating";
 import { TransparencyBadge } from "@/components/ui/TransparencyBadge";
 import { NavigationButtons } from "@/components/ui/NavigationButtons";
+import { PhotoGallery } from "@/components/ui/PhotoGallery";
 import { useT } from "@/stores/lang";
 import { useLangStore } from "@/stores/lang";
 import { translateTerm } from "@/utils/i18n";
@@ -167,6 +168,14 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
         <p className="text-text-muted text-xs uppercase tracking-wider font-medium">{t.getDirections}</p>
         <NavigationButtons lat={est.lat} lng={est.lng} name={est.name} />
       </div>
+
+      {/* photos */}
+      {est.photos.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-text-muted text-xs uppercase tracking-wider font-medium">{t.photos}</p>
+          <PhotoGallery photos={est.photos} maxPreview={3} />
+        </div>
+      )}
 
       <Link
         to={`/establishment/${est.id}`}
