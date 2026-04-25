@@ -124,7 +124,7 @@ export function EstablishmentPage() {
             {cp.roastPolicy && (
               <div>
                 <h3 className="text-text-muted text-xs uppercase tracking-wider mb-2">{t.roastPolicy}</h3>
-                <p className="text-sm">{cp.roastPolicy}</p>
+                <p className="text-sm">{translateTerm(cp.roastPolicy, lang as "en"|"es")}</p>
                 {cp.daysFromRoast && <p className="text-text-muted text-xs mt-1">~{cp.daysFromRoast} {t.daysFromRoast}</p>}
               </div>
             )}
@@ -135,7 +135,7 @@ export function EstablishmentPage() {
               {cp.signatureDrinks.map((d) => (
                 <div key={d.name} className="mb-2">
                   <span className="text-brand-300 font-medium text-sm">{d.name}</span>
-                  <p className="text-text-muted text-xs">{d.description}</p>
+                  <p className="text-text-muted text-xs">{translateTerm(d.description, lang as "en"|"es")}</p>
                 </div>
               ))}
             </div>

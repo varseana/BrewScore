@@ -78,7 +78,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
 
       {/* description */}
       {est.description && (
-        <p className="text-text-primary text-sm leading-relaxed">{est.description}</p>
+        <p className="text-text-primary text-sm leading-relaxed">{translateTerm(est.description, lang as "en" | "es")}</p>
       )}
 
       {/* status warning */}
@@ -129,7 +129,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
               {drinks.map((d) => (
                 <div key={d.name} className="mb-1.5">
                   <span className="text-brand-300 text-sm font-medium">{d.name}</span>
-                  <p className="text-text-muted text-xs">{d.description}</p>
+                  <p className="text-text-muted text-xs">{translateTerm(d.description, lang as "en" | "es")}</p>
                 </div>
               ))}
             </div>
@@ -145,7 +145,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
           {cp.roastPolicy && (
             <div>
               <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">{t.roastPolicy}</p>
-              <p className="text-sm text-text-primary">{cp.roastPolicy}</p>
+              <p className="text-sm text-text-primary">{translateTerm(cp.roastPolicy, lang as "en" | "es")}</p>
               {cp.daysFromRoast && <p className="text-text-muted text-xs mt-1">~{cp.daysFromRoast} {t.daysFromRoast}</p>}
             </div>
           )}
