@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { Rating } from "@/components/ui/Rating";
 import { TransparencyBadge } from "@/components/ui/TransparencyBadge";
 import { useT } from "@/stores/lang";
+import { useLangStore } from "@/stores/lang";
+import { translateTerm } from "@/utils/i18n";
 import type { Establishment } from "@/types";
 
 interface Props {
@@ -14,6 +16,7 @@ interface Props {
 
 export function EstablishmentPreview({ establishment: est, onClose }: Props) {
   const t = useT();
+  const { lang } = useLangStore();
   const cp = est.coffeeProgram;
   const methods = cp?.brewingMethods ?? [];
   const origins = cp?.beanOrigins ?? [];
@@ -24,12 +27,12 @@ export function EstablishmentPreview({ establishment: est, onClose }: Props) {
     <>
       {/* ⁘[ MOBILE ~ top sheet ]⁘ */}
       <div className="lg:hidden absolute top-14 left-0 right-0 z-[1001] max-h-[55vh] overflow-y-auto bg-bg/95 backdrop-blur-sm border-b border-border animate-slide-up">
-        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} t={t} />
+        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} t={t} lang={lang} />
       </div>
 
       {/* ⁘[ DESKTOP ~ right panel ]⁘ */}
       <div className="hidden lg:block absolute top-0 right-0 bottom-0 w-96 z-[1001] overflow-y-auto bg-bg/95 backdrop-blur-sm border-l border-border animate-fade-in">
-        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} t={t} />
+        <PreviewContent est={est} cp={cp} methods={methods} origins={origins} equipment={equipment} drinks={drinks} onClose={onClose} t={t} lang={lang} />
       </div>
     </>
   );
@@ -44,9 +47,10 @@ interface ContentProps {
   drinks: { name: string; description: string }[];
   onClose: () => void;
   t: ReturnType<typeof useT>;
+  lang: string;
 }
 
-function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose, t }: ContentProps) {
+function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose, t, lang }: ContentProps) {
   return (
     <div className="p-5 space-y-4">
       {/* header + close */}
@@ -93,7 +97,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
             <div>
               <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">{t.brewingMethods}</p>
               <div className="flex flex-wrap gap-1.5">
-                {methods.map((m) => <span key={m} className="badge-brand text-[10px]">{m}</span>)}
+                {methods.map((m) => <span key={m} className="badge-brand text-[10px]">{translateTerm(m, lang as "en" | "es")}</span>)}
               </div>
             </div>
           )}
@@ -113,7 +117,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
               {equipment.map((e) => (
                 <p key={e.name} className="text-sm">
                   <span className="text-text-primary">{e.name}</span>
-                  <span className="text-text-muted ml-1.5 text-xs">({e.type})</span>
+                  <span className="text-text-muted ml-1.5 text-xs">({translateTerm(e.type, lang as "en" | "es")})</span>
                 </p>
               ))}
             </div>
@@ -131,10 +135,18 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
             </div>
           )}
 
+          {cp.waterFiltration && (
+            <div>
+              <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">{t.waterFiltration}</p>
+              <p className="text-sm text-text-primary">{translateTerm(cp.waterFiltration, lang as "en" | "es")}</p>
+            </div>
+          )}
+
           {cp.roastPolicy && (
             <div>
               <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">{t.roastPolicy}</p>
               <p className="text-sm text-text-primary">{cp.roastPolicy}</p>
+              {cp.daysFromRoast && <p className="text-text-muted text-xs mt-1">~{cp.daysFromRoast} {t.daysFromRoast}</p>}
             </div>
           )}
 
@@ -142,7 +154,7 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
             <div>
               <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1.5">{t.milkOptions}</p>
               <div className="flex flex-wrap gap-1.5">
-                {cp.milkOptions.map((m) => <span key={m} className="badge-brand text-[10px]">{m}</span>)}
+                {cp.milkOptions.map((m) => <span key={m} className="badge-brand text-[10px]">{translateTerm(m, lang as "en" | "es")}</span>)}
               </div>
             </div>
           )}

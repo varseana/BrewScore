@@ -10,11 +10,14 @@ import { ReviewCard } from "@/components/cards/ReviewCard";
 import { Modal } from "@/components/ui/Modal";
 import { ProfileSkeleton } from "@/components/ui/Skeleton";
 import { useT } from "@/stores/lang";
+import { useLangStore } from "@/stores/lang";
+import { translateTerm } from "@/utils/i18n";
 
 export function EstablishmentPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
   const t = useT();
+  const { lang } = useLangStore();
   const { data: est, isLoading } = useEstablishment(id!);
   const { data: reviewPages, fetchNextPage, hasNextPage } = useEstablishmentReviews(id!);
   const toggleFav = useToggleFavorite();
@@ -92,7 +95,7 @@ export function EstablishmentPage() {
             {cp.brewingMethods.length > 0 && (
               <div>
                 <h3 className="text-text-muted text-xs uppercase tracking-wider mb-2">{t.brewingMethods}</h3>
-                <div className="flex flex-wrap gap-1.5">{cp.brewingMethods.map((m) => <span key={m} className="badge-brand">{m}</span>)}</div>
+                <div className="flex flex-wrap gap-1.5">{cp.brewingMethods.map((m) => <span key={m} className="badge-brand">{translateTerm(m, lang as "en"|"es")}</span>)}</div>
               </div>
             )}
             {cp.equipment.length > 0 && (
@@ -101,7 +104,7 @@ export function EstablishmentPage() {
                 {cp.equipment.map((e) => (
                   <div key={e.name} className="text-sm mb-1">
                     <span className="text-text-primary">{e.name}</span>
-                    <span className="text-text-muted ml-2">({e.type})</span>
+                    <span className="text-text-muted ml-2">({translateTerm(e.type, lang as "en"|"es")})</span>
                   </div>
                 ))}
               </div>
@@ -109,20 +112,20 @@ export function EstablishmentPage() {
             {cp.milkOptions.length > 0 && (
               <div>
                 <h3 className="text-text-muted text-xs uppercase tracking-wider mb-2">{t.milkOptions}</h3>
-                <div className="flex flex-wrap gap-1.5">{cp.milkOptions.map((m) => <span key={m} className="badge-brand">{m}</span>)}</div>
+                <div className="flex flex-wrap gap-1.5">{cp.milkOptions.map((m) => <span key={m} className="badge-brand">{translateTerm(m, lang as "en"|"es")}</span>)}</div>
               </div>
             )}
             {cp.waterFiltration && (
               <div>
-                <h3 className="text-text-muted text-xs uppercase tracking-wider mb-2">Water Filtration</h3>
-                <p className="text-sm">{cp.waterFiltration}</p>
+                <h3 className="text-text-muted text-xs uppercase tracking-wider mb-2">{t.waterFiltration}</h3>
+                <p className="text-sm">{translateTerm(cp.waterFiltration, lang as "en"|"es")}</p>
               </div>
             )}
             {cp.roastPolicy && (
               <div>
                 <h3 className="text-text-muted text-xs uppercase tracking-wider mb-2">{t.roastPolicy}</h3>
                 <p className="text-sm">{cp.roastPolicy}</p>
-                {cp.daysFromRoast && <p className="text-text-muted text-xs mt-1">~{cp.daysFromRoast} days from roast</p>}
+                {cp.daysFromRoast && <p className="text-text-muted text-xs mt-1">~{cp.daysFromRoast} {t.daysFromRoast}</p>}
               </div>
             )}
           </div>

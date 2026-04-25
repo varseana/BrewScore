@@ -28,8 +28,10 @@ const translations = {
     equipment: "Equipment",
     signatureDrinks: "Signature Drinks",
     roastPolicy: "Roast Policy",
+    daysFromRoast: "days from roast",
     milkOptions: "Milk Options",
     coffeeProgram: "Coffee Program",
+    waterFiltration: "Water Filtration",
     verified: "Verified",
     underReview: "Under review — some information may be inaccurate",
 
@@ -139,8 +141,10 @@ const translations = {
     equipment: "Equipo",
     signatureDrinks: "Bebidas Especiales",
     roastPolicy: "Politica de Tueste",
+    daysFromRoast: "dias desde el tueste",
     milkOptions: "Opciones de Leche",
     coffeeProgram: "Programa de Cafe",
+    waterFiltration: "Filtracion de Agua",
     verified: "Verificado",
     underReview: "En revision — alguna informacion puede ser inexacta",
 
@@ -220,4 +224,72 @@ const translations = {
 
 export type Lang = keyof typeof translations;
 export type TranslationKey = keyof typeof translations.en;
+
+// ⁘[ TERMINOS DINAMICOS ]⁘
+// para traducir valores que vienen del backend (leche, equipo, etc)
+
+const dynamicTerms: Record<string, Record<string, string>> = {
+  es: {
+    // milk options
+    "whole": "entera",
+    "oat": "avena",
+    "almond": "almendra",
+    "coconut": "coco",
+    "skim": "descremada",
+    "soy": "soya",
+    "condensed milk": "leche condensada",
+
+    // equipment types
+    "espresso machine": "maquina de espresso",
+    "grinder": "molino",
+    "manual": "manual",
+    "roaster": "tostador",
+    "hand grinder": "molino manual",
+
+    // water filtration
+    "water filtration": "filtracion de agua",
+    "Carbon filter": "filtro de carbon",
+    "Carbon block filter": "filtro de carbon en bloque",
+    "Reverse osmosis + mineral dosing": "osmosis inversa + dosificacion mineral",
+    "BWT Bestmax Premium": "BWT Bestmax Premium",
+    "Everpure filtration system": "sistema de filtracion Everpure",
+    "Industrial filtration": "filtracion industrial",
+    "Mountain spring water": "agua de manantial",
+    "Mountain spring": "agua de manantial",
+    "Spring water from Talamanca": "agua de manantial de Talamanca",
+    "Cloud forest spring water": "agua de manantial del bosque nuboso",
+
+    // brewing methods
+    "espresso": "espresso",
+    "pour-over": "vertido",
+    "cold brew": "cold brew",
+    "French press": "prensa francesa",
+    "AeroPress": "AeroPress",
+    "siphon": "sifon",
+    "drip": "goteo",
+    "batch brew": "preparacion por lotes",
+    "cupping": "catacion",
+    "ristretto": "ristretto",
+    "lungo": "lungo",
+    "cappuccino": "cappuccino",
+    "kopi tubruk": "kopi tubruk",
+    "Vietnamese phin": "phin vietnamita",
+    "Chemex": "Chemex",
+
+    // general
+    "days from roast": "dias desde el tueste",
+  },
+};
+
+export function translateTerm(term: string, lang: Lang): string {
+  if (lang === "en") return term;
+  const dict = dynamicTerms[lang];
+  if (!dict) return term;
+  // buscar exacto primero, luego case-insensitive
+  if (dict[term]) return dict[term];
+  const lower = term.toLowerCase();
+  if (dict[lower]) return dict[lower];
+  return term;
+}
+
 export default translations;
