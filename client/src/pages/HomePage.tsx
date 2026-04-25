@@ -17,7 +17,7 @@ export function HomePage() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data, isLoading } = useEstablishments({
-    bounds: view === "map" ? bounds : undefined,
+    bounds: bounds || undefined,
     q: search || undefined,
     limit: 50,
   });
@@ -75,7 +75,7 @@ export function HomePage() {
       </div>
 
       {/* ⁘[ MAPA ]⁘ ~ fullscreen en mobile, flex-1 en desktop */}
-      <div className={`flex-1 min-h-0 ${view === "list" ? "hidden lg:block" : ""}`}>
+      <div className="absolute inset-0 lg:relative lg:flex-1">
         <MapView
           establishments={establishments}
           userLat={lat}
