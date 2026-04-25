@@ -152,6 +152,43 @@ function ClusterLayer({ establishments, userLat, userLng }: ClusterProps) {
   return null;
 }
 
+// ⁘[ USER LOCATION MARKER ]⁘
+// puntito azul pulsante para saber donde estas
+
+function UserLocationMarker({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  const markerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    if (markerRef.current) map.removeLayer(markerRef.current);
+
+    const icon = L.divIcon({
+      className: "user-location",
+      html: `<div style="
+        width:16px;height:16px;border-radius:50%;
+        background:#4A9EFF;border:3px solid #fff;
+        box-shadow:0 0 12px rgba(74,158,255,0.6),0 0 24px rgba(74,158,255,0.3);
+        animation:userPulse 2s ease-in-out infinite;
+      "></div>`,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+    });
+
+    markerRef.current = L.marker([lat, lng], { icon, zIndexOffset: 1000 })
+      .addTo(map)
+      .bindPopup("You are here", {
+        className: "brewscore-popup",
+        closeButton: false,
+      });
+
+    return () => {
+      if (markerRef.current) map.removeLayer(markerRef.current);
+    };
+  }, [map, lat, lng]);
+
+  return null;
+}
+
 // ⁘[ MAP VIEW PRINCIPAL ]⁘
 
 interface MapViewProps {
@@ -182,7 +219,12 @@ export function MapView({ establishments, userLat, userLng, onBoundsChange }: Ma
           userLat={userLat}
           userLng={userLng}
         />
-        {userLat && userLng && <RecenterButton lat={userLat} lng={userLng} />}
+        {userLat && userLng && (
+          <>
+            <UserLocationMarker lat={userLat} lng={userLng} />
+            <RecenterButton lat={userLat} lng={userLng} />
+          </>
+        )}
       </MapContainer>
 
       {/* popup styles override */}
@@ -205,6 +247,14 @@ export function MapView({ establishments, userLat, userLng, onBoundsChange }: Ma
         .custom-marker, .custom-cluster {
           background: transparent !important;
           border: none !important;
+        }
+        .user-location {
+          background: transparent !important;
+          border: none !important;
+        }
+        @keyframes userPulse {
+          0%, 100% { box-shadow: 0 0 12px rgba(74,158,255,0.6), 0 0 24px rgba(74,158,255,0.3); }
+          50% { box-shadow: 0 0 20px rgba(74,158,255,0.8), 0 0 40px rgba(74,158,255,0.4); }
         }
       `}</style>
     </div>
