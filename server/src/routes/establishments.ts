@@ -128,11 +128,11 @@ const createSchema = z.object({
 
 router.post(
   "/",
-  authenticate, requireRole("ADMIN", "OWNER"),
+  authenticate,
   validate(createSchema),
   async (req: Request, res: Response): Promise<void> => {
     const est = await prisma.establishment.create({
-      data: { ...req.body, ownerId: req.user!.role === "OWNER" ? req.user!.userId : undefined },
+      data: { ...req.body },
     });
     res.status(201).json(est);
   }

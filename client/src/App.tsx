@@ -15,6 +15,8 @@ const ProfilePage = lazy(() => import("@/pages/ProfilePage").then((m) => ({ defa
 const FeedPage = lazy(() => import("@/pages/FeedPage").then((m) => ({ default: m.FeedPage })));
 const ExplorePage = lazy(() => import("@/pages/ExplorePage").then((m) => ({ default: m.ExplorePage })));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
+const AddPlacePage = lazy(() => import("@/pages/AddPlacePage").then((m) => ({ default: m.AddPlacePage })));
+const OwnerDashboardPage = lazy(() => import("@/pages/OwnerDashboardPage").then((m) => ({ default: m.OwnerDashboardPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +86,22 @@ export function App() {
               element={
                 <ErrorBoundary>
                   <Suspense fallback={<PageLoader />}><ExplorePage /></Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/add-place"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<PageLoader />}><AddPlacePage /></Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/owner"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<PageLoader />}><OwnerDashboardPage /></Suspense>
                 </ErrorBoundary>
               }
             />

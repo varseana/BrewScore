@@ -27,12 +27,14 @@ export function Header() {
         <nav className="hidden md:flex items-center gap-5">
           <Link to="/explore" className="text-text-muted hover:text-text-primary transition-colors text-sm font-medium">{t.explore}</Link>
           <Link to="/feed" className="text-text-muted hover:text-text-primary transition-colors text-sm font-medium">{t.feed}</Link>
+          <Link to="/add-place" className="text-text-muted hover:text-text-primary transition-colors text-sm font-medium">{t.addPlace}</Link>
           <button onClick={toggleLang} className="text-text-muted hover:text-text-primary transition-colors text-xs font-medium border border-border rounded-sm px-2 py-1 uppercase">
             {lang}
           </button>
           {isAuthenticated() ? (
             <div className="flex items-center gap-3">
               {user?.role === "ADMIN" && <Link to="/admin" className="text-error hover:text-error/80 transition-colors text-sm font-medium">{t.admin}</Link>}
+              {user?.role === "OWNER" && <Link to="/owner" className="text-brand-500 hover:text-brand-300 transition-colors text-sm font-medium">{t.ownerDashboard}</Link>}
               <Link to={`/profile/${user?.id}`} className="w-8 h-8 rounded-full bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-300 text-sm font-medium hover:opacity-80 transition-opacity">
                 {user?.name.charAt(0).toUpperCase()}
               </Link>
@@ -60,9 +62,11 @@ export function Header() {
           <nav className="flex flex-col p-4 gap-3">
             <Link to="/explore" onClick={() => setMenuOpen(false)} className="text-text-muted hover:text-text-primary text-sm font-medium py-2">{t.explore}</Link>
             <Link to="/feed" onClick={() => setMenuOpen(false)} className="text-text-muted hover:text-text-primary text-sm font-medium py-2">{t.feed}</Link>
+            <Link to="/add-place" onClick={() => setMenuOpen(false)} className="text-text-muted hover:text-text-primary text-sm font-medium py-2">{t.addPlace}</Link>
             {isAuthenticated() ? (
               <>
                 {user?.role === "ADMIN" && <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-error text-sm font-medium py-2">{t.admin}</Link>}
+                {user?.role === "OWNER" && <Link to="/owner" onClick={() => setMenuOpen(false)} className="text-brand-500 text-sm font-medium py-2">{t.ownerDashboard}</Link>}
                 <Link to={`/profile/${user?.id}`} onClick={() => setMenuOpen(false)} className="text-text-muted hover:text-text-primary text-sm font-medium py-2">{t.profile}</Link>
                 <button onClick={handleLogout} className="text-text-muted hover:text-text-primary text-sm font-medium py-2 text-left">{t.logout}</button>
               </>
