@@ -16,7 +16,10 @@ const app = express();
 
 // ⁘[ MIDDLEWARE GLOBAL ]⁘
 
-app.use(cors({ origin: config.clientUrl, credentials: true }));
+app.use(cors({
+  origin: config.clientUrl.split(",").map((u) => u.trim()),
+  credentials: true,
+}));
 app.use(express.json({ limit: "5mb" }));
 
 // ⁘[ HEALTH CHECK ]⁘
