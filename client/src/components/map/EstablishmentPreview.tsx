@@ -4,6 +4,7 @@
 import { Link } from "react-router-dom";
 import { Rating } from "@/components/ui/Rating";
 import { TransparencyBadge } from "@/components/ui/TransparencyBadge";
+import { NavigationButtons } from "@/components/ui/NavigationButtons";
 import { useT } from "@/stores/lang";
 import { useLangStore } from "@/stores/lang";
 import { translateTerm } from "@/utils/i18n";
@@ -161,7 +162,12 @@ function PreviewContent({ est, cp, methods, origins, equipment, drinks, onClose,
         </div>
       )}
 
-      {/* link al perfil completo */}
+      {/* navigation + full profile */}
+      <div className="space-y-3">
+        <p className="text-text-muted text-xs uppercase tracking-wider font-medium">{t.getDirections}</p>
+        <NavigationButtons lat={est.lat} lng={est.lng} name={est.name} />
+      </div>
+
       <Link
         to={`/establishment/${est.id}`}
         className="btn-primary w-full text-center text-sm block"

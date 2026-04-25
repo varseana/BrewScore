@@ -9,6 +9,7 @@ import { TransparencyBadge } from "@/components/ui/TransparencyBadge";
 import { ReviewCard } from "@/components/cards/ReviewCard";
 import { Modal } from "@/components/ui/Modal";
 import { ProfileSkeleton } from "@/components/ui/Skeleton";
+import { NavigationButtons } from "@/components/ui/NavigationButtons";
 import { useT } from "@/stores/lang";
 import { useLangStore } from "@/stores/lang";
 import { translateTerm } from "@/utils/i18n";
@@ -79,6 +80,12 @@ export function EstablishmentPage() {
               <button onClick={() => setShowReportModal(true)} className="btn-danger text-sm py-2 px-3">{t.report}</button>
             </div>
           )}
+        </div>
+
+        {/* como llegar */}
+        <div className="mt-4">
+          <p className="text-text-muted text-xs uppercase tracking-wider font-medium mb-2">{t.getDirections}</p>
+          <NavigationButtons lat={est.lat} lng={est.lng} name={est.name} />
         </div>
       </div>
 
